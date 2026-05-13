@@ -1,0 +1,10 @@
+node_modules/
+public/
+db.json
+.DS_Store
+*.log
+_npm-debug.log*
+debug*.log
+Thumbs.db
+test.txt
+_config.landscape.yml
