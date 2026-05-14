@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>王昕 | AI 数字化转型 · 智能制造</title>
+    <meta name="description" content="王昕，AI数字化转型学者，专注于前沿技术与技术创新。">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>昕</text></svg>">
+    <style>
+        /* ===== Reset & Base ===== */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        a { color: inherit; text-decoration: none; }
+
+        /* ===== Cursor Bubbles ===== */
+        #bubble-canvas {
+            position: fixed; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* ===== Image Viewer Modal ===== */
+        #img-viewer {
+            position: fixed; inset: 0;
+            z-index: 10000;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(12px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            cursor: zoom-out;
+        }
+        #img-viewer.open { display: flex; }
+        #img-viewer img {
+            max-width: 90vw;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: fadeUp 0.3s ease;
+        }
+        #img-viewer .close-btn {
+            position: absolute; top: 24px; right: 24px;
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 22px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        #img-viewer .close-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.1);
+        }
+        @media (max-width: 640px) {
+            #img-viewer { padding: 16px; }
+        }
+
+        /* ===== Animations ===== */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(34, 162, 195, 0.3); }
+            50%       { box-shadow: 0 0 40px rgba(34, 162, 195, 0.6); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50%      { transform: translateY(-20px); }
+        }
+        @keyframes marquee {
+            from { transform: translateX(0); }
+            to   { transform: translateX(-50%); }
+        }
+        @keyframes scrollHint {
+            0%, 100% { opacity: 0.3; transform: translateY(0); }
+            50%      { opacity: 1; transform: translateY(8px); }
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+
+        /* ===== Scrollbar ===== */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0a0f; }
+        ::-webkit-scrollbar-thumb { background: #1B6F88; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #22A2C3; }
+
+        /* ===== Navigation ===== */
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0;
+            z-index: 1000;
+            padding: 20px 60px;
+            display: flex; align-items: center; justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+        .nav.scrolled {
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(20px);
+            padding: 12px 60px;
+            border-bottom: 1px solid rgba(34, 162, 195, 0.1);
+        }
+        .nav-logo {
+            font-size: 24px; font-weight: 800;
+            background: linear-gradient(135deg, #5CC5DF, #22A2C3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+        }
+        .nav-links {
+            display: flex; gap: 36px; list-style: none; align-items: center;
+        }
+        .nav-links a {
+            font-size: 14px; font-weight: 500;
+            color: rgba(255,255,255,0.6);
+            transition: color 0.3s;
+            position: relative;
+        }
+        .nav-links a::after {
+            content: ''; position: absolute; bottom: -4px; left: 0;
+            width: 0; height: 2px;
+            background: linear-gradient(90deg, #22A2C3, #5CC5DF);
+            transition: width 0.3s;
+        }
+        .nav-links a:hover { color: #fff; }
+        .nav-links a:hover::after { width: 100%; }
+        .nav-toggle {
+            display: none; flex-direction: column; gap: 5px;
+            cursor: pointer; background: none; border: none; padding: 4px;
+        }
+        .nav-toggle span {
+            display: block; width: 24px; height: 2px;
+            background: #fff; border-radius: 2px;
+            transition: all 0.3s;
+        }
+        .nav-toggle.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+        .nav-toggle.active span:nth-child(2) { opacity: 0; }
+        .nav-toggle.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+        /* ===== Hero ===== */
+        .hero {
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 0 60px;
+            background: linear-gradient(135deg, #0a0a0f 0%, #0A1A1E 50%, #0a0a0f 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        .hero::before {
+            content: '';
+            position: absolute; top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(34, 162, 195, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(34, 162, 195, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        .hero-grid-bg {
+            position: absolute; inset: 0;
+            background-image:
+                linear-gradient(rgba(34, 162, 195, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(34, 162, 195, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+        }
+        .hero-content {
+            text-align: center; position: relative; z-index: 2;
+            max-width: 800px;
+        }
+        .hero-greeting {
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            margin-bottom: 24px;
+            animation: fadeUp 0.8s ease 0.2s both;
+        }
+        .hero-greeting .line {
+            width: 40px; height: 1px;
+            background: linear-gradient(90deg, transparent, #22A2C3);
+        }
+        .hero-greeting .line:last-child {
+            background: linear-gradient(90deg, #22A2C3, transparent);
+        }
+        .hero-greeting span {
+            font-size: 14px; letter-spacing: 4px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+        }
+        .hero-title {
+            font-size: 72px; font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 20px;
+            animation: fadeUp 0.8s ease 0.4s both;
+        }
+        .hero-title .highlight {
+            background: linear-gradient(135deg, #5CC5DF, #22A2C3, #1A8AA8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-title .wave {
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+        }
+        .hero-subtitle {
+            font-size: 18px;
+            color: rgba(255,255,255,0.5);
+            max-width: 600px;
+            margin: 0 auto 40px;
+            animation: fadeUp 0.8s ease 0.6s both;
+            line-height: 1.8;
+        }
+        .hero-buttons {
+            display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+            animation: fadeUp 0.8s ease 0.8s both;
+        }
+        .btn {
+            padding: 14px 36px; border-radius: 50px;
+            font-size: 15px; font-weight: 600;
+            cursor: pointer; transition: all 0.4s;
+            border: none; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #22A2C3, #1A8AA8);
+            color: #fff;
+            animation: pulseGlow 3s ease-in-out infinite;
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            animation: pulseGlow 1.5s ease-in-out infinite;
+        }
+        .btn-outline {
+            background: transparent;
+            color: #5CC5DF;
+            border: 1px solid rgba(34, 162, 195, 0.3);
+        }
+        .btn-outline:hover {
+            background: rgba(34, 162, 195, 0.1);
+            border-color: #22A2C3;
+            transform: translateY(-3px);
+        }
+        .hero-tags {
+            display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+            margin-top: 40px;
+            animation: fadeUp 0.8s ease 1s both;
+        }
+        .hero-tags span {
+            padding: 6px 16px;
+            border: 1px solid rgba(34, 162, 195, 0.2);
+            border-radius: 20px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+        }
+
+        .scroll-indicator {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+            color: rgba(255,255,255,0.2);
+            font-size: 12px; letter-spacing: 2px;
+        }
+        .scroll-indicator .mouse {
+            width: 24px; height: 38px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            position: relative;
+        }
+        .scroll-indicator .mouse::after {
+            content: ''; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+            width: 3px; height: 8px;
+            background: #22A2C3;
+            border-radius: 2px;
+            animation: scrollHint 2s ease infinite;
+        }
+
+        /* ===== Section Common ===== */
+        section { padding: 120px 60px; position: relative; }
+        .section-label {
+            font-size: 12px; letter-spacing: 4px;
+            color: #22A2C3; text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+        .section-title {
+            font-size: 42px; font-weight: 700; margin-bottom: 16px;
+        }
+        .section-desc {
+            font-size: 16px; color: rgba(255,255,255,0.45);
+            max-width: 540px; line-height: 1.8;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* ===== Expertise / Services ===== */
+        .expertise { background: #0d0d14; }
+        .expertise-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+            margin-top: 60px;
+        }
+        .exp-card {
+            background: linear-gradient(135deg, rgba(34, 162, 195, 0.05), rgba(15, 48, 58, 0.5));
+            border: 1px solid rgba(34, 162, 195, 0.08);
+            border-radius: 20px;
+            padding: 40px 32px;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative; overflow: hidden;
+        }
+        .exp-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #22A2C3, transparent);
+            opacity: 0; transition: opacity 0.5s;
+        }
+        .exp-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(34, 162, 195, 0.3);
+            background: linear-gradient(135deg, rgba(34, 162, 195, 0.1), rgba(15, 48, 58, 0.6));
+        }
+        .exp-card:hover::before { opacity: 1; }
+        .exp-icon {
+            width: 56px; height: 56px;
+            background: linear-gradient(135deg, rgba(34, 162, 195, 0.15), rgba(26, 138, 168, 0.15));
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; margin-bottom: 20px;
+        }
+        .exp-card h3 {
+            font-size: 20px; font-weight: 700; margin-bottom: 12px;
+        }
+        .exp-card p {
+            font-size: 14px; color: rgba(255,255,255,0.5);
+            line-height: 1.8;
+        }
+        .exp-card .exp-num {
+            position: absolute; bottom: 16px; right: 24px;
+            font-size: 48px; font-weight: 800;
+            color: rgba(34, 162, 195, 0.05);
+            line-height: 1;
+        }
+
+        /* ===== Stats ===== */
+        .journey {
+            background: linear-gradient(135deg, #0d0d14, #0A1A1E);
+        }
+        .journey-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 40px;
+        }
+        .journey-photo {
+            position: relative;
+            aspect-ratio: 16 / 9;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(34, 162, 195, 0.12);
+            background: rgba(34, 162, 195, 0.04);
+            transition: all 0.4s;
+            cursor: pointer;
+        }
+        .journey-photo:hover {
+            border-color: rgba(34, 162, 195, 0.35);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(34, 162, 195, 0.15);
+        }
+        .journey-photo img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .journey-photo .del-btn {
+            position: absolute; top: 6px; right: 6px;
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0,0,0,0.5);
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            display: none;
+            align-items: center; justify-content: center;
+            backdrop-filter: blur(4px);
+            transition: all 0.2s;
+        }
+        .journey-photo:hover .del-btn { display: flex; }
+        .journey-photo .del-btn:hover { background: rgba(220, 38, 38, 0.8); transform: scale(1.1); }
+        .journey-photo.empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: rgba(255,255,255,0.2);
+            font-size: 12px;
+            border: 1px dashed rgba(34, 162, 195, 0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .journey-photo.empty:hover {
+            border-color: rgba(34, 162, 195, 0.5);
+            background: rgba(34, 162, 195, 0.08);
+            color: rgba(255,255,255,0.4);
+        }
+        .journey-photo.empty .upload-icon {
+            font-size: 28px;
+        }
+        .journey-empty-msg {
+            text-align: center;
+            margin-top: 40px;
+            color: rgba(255,255,255,0.2);
+            font-size: 14px;
+        }
+
+        /* ===== Skills ===== */
+        .skills { background: #0a0a0f; }
+        .skills-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            margin-top: 60px;
+            align-items: center;
+        }
+        .skills-text {
+            padding-right: 40px;
+        }
+        .skills-text .about-bio {
+            font-size: 15px; color: rgba(255,255,255,0.55);
+            line-height: 1.9;
+            margin-bottom: 24px;
+        }
+        .skills-text .about-highlights {
+            list-style: none; display: flex; flex-direction: column; gap: 12px;
+        }
+        .skills-text .about-highlights li {
+            display: flex; align-items: flex-start; gap: 12px;
+            font-size: 14px; color: rgba(255,255,255,0.6);
+        }
+        .skills-text .about-highlights li::before {
+            content: '✦'; color: #22A2C3;
+            font-size: 12px; flex-shrink: 0; margin-top: 3px;
+        }
+        .skills-bars { display: flex; flex-direction: column; gap: 28px; }
+        .skill-item {}
+        .skill-header {
+            display: flex; justify-content: space-between;
+            font-size: 14px; font-weight: 600; margin-bottom: 10px;
+        }
+        .skill-header .skill-name { color: rgba(255,255,255,0.8); }
+        .skill-header .skill-pct { color: #22A2C3; }
+        .skill-bar {
+            height: 6px;
+            background: rgba(34, 162, 195, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .skill-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #22A2C3, #5CC5DF);
+            border-radius: 3px;
+            width: 0;
+            transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .skill-bar-fill.animated { /* width set via inline style */ }
+
+        /* ===== Projects ===== */
+        .projects { background: #0d0d14; }
+        .project-showcase {
+            margin-top: 60px;
+            background: linear-gradient(135deg, rgba(34, 162, 195, 0.04), rgba(15, 48, 58, 0.4));
+            border: 1px solid rgba(34, 162, 195, 0.1);
+            border-radius: 24px;
+            padding: 50px;
+            transition: all 0.5s;
+        }
+        .project-showcase:hover {
+            border-color: rgba(34, 162, 195, 0.25);
+            background: linear-gradient(135deg, rgba(34, 162, 195, 0.08), rgba(15, 48, 58, 0.5));
+        }
+        .project-showcase .proj-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(34, 162, 195, 0.15);
+            color: #5CC5DF;
+            border-radius: 6px;
+            font-size: 12px; font-weight: 500;
+            margin-bottom: 16px;
+        }
+        .project-showcase h3 {
+            font-size: 28px; font-weight: 700; margin-bottom: 8px;
+        }
+        .project-showcase .proj-sub {
+            font-size: 14px; color: rgba(255,255,255,0.4);
+            margin-bottom: 20px;
+        }
+        .project-showcase p {
+            font-size: 15px; color: rgba(255,255,255,0.55);
+            line-height: 1.8; max-width: 700px;
+        }
+        .project-meta {
+            display: flex; gap: 40px; flex-wrap: wrap;
+            margin-top: 28px; padding-top: 28px;
+            border-top: 1px solid rgba(34, 162, 195, 0.08);
+        }
+        .project-meta .meta-item {
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .project-meta .meta-item .meta-label {
+            font-size: 11px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1px;
+        }
+        .project-meta .meta-item .meta-value {
+            font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.7);
+        }
+
+        /* ===== Testimonials ===== */
+        .testimonials { background: #0a0a0f; }
+        .testimonial-card {
+            margin-top: 60px;
+            background: linear-gradient(135deg, rgba(34, 162, 195, 0.04), rgba(15, 48, 58, 0.4));
+            border: 1px solid rgba(34, 162, 195, 0.08);
+            border-radius: 20px;
+            padding: 50px;
+            max-width: 700px;
+            text-align: center;
+            margin-left: auto; margin-right: auto;
+        }
+        .testimonial-card .quote-icon {
+            font-size: 48px; color: rgba(34, 162, 195, 0.15);
+            margin-bottom: 16px;
+            line-height: 1;
+        }
+        .testimonial-card blockquote {
+            font-size: 18px; font-style: italic;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.8;
+            margin-bottom: 28px;
+        }
+        .testimonial-card .testimonial-author {
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+        }
+        .testimonial-card .testimonial-author .avatar {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, #22A2C3, #1A8AA8);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: 700; color: #fff;
+        }
+        .testimonial-card .testimonial-author .info { text-align: left; }
+        .testimonial-card .testimonial-author .info .name {
+            font-size: 15px; font-weight: 600;
+        }
+        .testimonial-card .testimonial-author .info .role {
+            font-size: 12px; color: rgba(255,255,255,0.35);
+        }
+
+        /* ===== Contact / CTA ===== */
+        .contact {
+            background: linear-gradient(135deg, #0d0d14, #0A1A1E);
+            text-align: center;
+        }
+        .contact-cta {
+            margin-top: 40px;
+            font-size: 20px; color: rgba(255,255,255,0.5);
+        }
+        .contact-cta .cta-highlight {
+            color: #5CC5DF; font-weight: 700;
+        }
+        .contact-links {
+            display: flex; gap: 24px; justify-content: center;
+            margin-top: 40px; flex-wrap: wrap;
+        }
+        .contact-link {
+            display: flex; align-items: center; gap: 10px;
+            padding: 14px 28px;
+            border: 1px solid rgba(34, 162, 195, 0.15);
+            border-radius: 12px;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        .contact-link:hover {
+            border-color: #22A2C3;
+            background: rgba(34, 162, 195, 0.1);
+            transform: translateY(-2px);
+        }
+        .contact-link .icon { font-size: 18px; }
+
+        /* ===== Footer ===== */
+        .footer {
+            padding: 40px 60px;
+            border-top: 1px solid rgba(34, 162, 195, 0.06);
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 13px; color: rgba(255,255,255,0.25);
+        }
+        .footer a:hover { color: #5CC5DF; }
+        .footer .footer-links { display: flex; gap: 24px; }
+
+        /* ===== Marquee Banner ===== */
+        .marquee-banner {
+            padding: 20px 0;
+            background: linear-gradient(90deg, rgba(34, 162, 195, 0.05), transparent);
+            overflow: hidden;
+            border-top: 1px solid rgba(34, 162, 195, 0.05);
+            border-bottom: 1px solid rgba(34, 162, 195, 0.05);
+        }
+        .marquee-track {
+            display: flex; gap: 60px;
+            width: fit-content;
+            animation: marquee 30s linear infinite;
+            white-space: nowrap;
+        }
+        .marquee-track span {
+            font-size: 14px; color: rgba(255,255,255,0.15);
+            letter-spacing: 2px;
+        }
+        .marquee-track span em { font-style: normal; color: #22A2C3; }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 968px) {
+            .skills-content { grid-template-columns: 1fr; gap: 40px; }
+            .skills-text { padding-right: 0; }
+            .hero-title { font-size: 48px; }
+            section { padding: 80px 24px; }
+            .nav { padding: 16px 24px; }
+            .nav.scrolled { padding: 12px 24px; }
+            .footer { padding: 30px 24px; flex-direction: column; gap: 16px; text-align: center; }
+        }
+        @media (max-width: 640px) {
+            .nav-links {
+                position: fixed; top: 0; right: -100%;
+                width: 260px; height: 100vh;
+                background: rgba(10, 10, 15, 0.98);
+                backdrop-filter: blur(20px);
+                flex-direction: column; padding: 80px 40px;
+                gap: 24px;
+                transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                align-items: flex-start;
+                border-left: 1px solid rgba(34, 162, 195, 0.1);
+            }
+            .nav-links.open { right: 0; }
+            .nav-toggle { display: flex; }
+            .hero { padding: 0 24px; }
+            .hero-title { font-size: 36px; }
+            .hero-tags span { font-size: 11px; }
+            .section-title { font-size: 32px; }
+            .expertise-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+            .stat-item .stat-num { font-size: 40px; }
+            .project-showcase { padding: 28px; }
+            .project-meta { gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== Navigation ===== -->
+<nav class="nav" id="navbar">
+    <a href="#hero" class="nav-logo">王昕</a>
+    <ul class="nav-links" id="navLinks">
+        <li><a href="#hero">理想</a></li>
+        <li><a href="#expertise">学习</a></li>
+        <li><a href="#projects">案例</a></li>
+        <li><a href="#journey">学程</a></li>
+        <li><a href="#skills">伙伴</a></li>
+        <li><a href="#contact">联系</a></li>
+    </ul>
+    <button class="nav-toggle" id="navToggle" aria-label="菜单">
+        <span></span><span></span><span></span>
+    </button>
+</nav>
+
+<!-- ===== Hero ===== -->
+<section class="hero" id="hero">
+    <div class="hero-grid-bg"></div>
+    <div class="hero-content">
+        <div class="hero-greeting">
+            <div class="line"></div>
+            <span>HUAN YING</span>
+            <div class="line"></div>
+        </div>
+        <h1 class="hero-title">
+            你好，这里是 <span class="highlight">王昕</span>博客空间
+            <span class="wave">👋</span>
+        </h1>
+        <p class="hero-subtitle">
+            专注于 <strong style="color:#5CC5DF;">深耕AI 数字化转型</strong> 与 <strong style="color:#5CC5DF;">人工智能</strong><br>
+            努力学习用技术创新驱动产业升级，让未来触手可及
+        </p>
+        <div class="hero-buttons">
+            <a href="#contact" class="btn btn-primary">联系我 →</a>
+            <a href="#projects" class="btn btn-outline">查看项目</a>
+        </div>
+        <div class="hero-tags">
+            <span>AI 转型</span>
+            <span>智能制造</span>
+            <span>技术架构</span>
+            <span>项目管理</span>
+        </div>
+    </div>
+    <div class="scroll-indicator">
+        <div class="mouse"></div>
+        <span>向下滚动</span>
+    </div>
+</section>
+
+<!-- ===== Expertise / 理想 ===== -->
+<section class="expertise" id="expertise">
+    <div class="container">
+        <div class="reveal">
+            <p class="section-label">— 学习领域</p>
+            <h2 class="section-title">希望最终能成为</h2>
+            <p class="section-desc">学习技术洞察与积累实战经验，为实现战略到落地的全链路数字化服务 </p>
+        </div>
+        <div class="expertise-grid">
+            <div class="exp-card reveal">
+                <div class="exp-icon">🧠</div>
+                <h3>深耕 AI 数字化转型</h3>
+                <p>为企业量身定制 AI 转型方案，涵盖大模型应用、智能体平台搭建、工业视觉检测，从战略规划到落地执行，让 AI 真正创造价值。</p>
+                <div class="exp-num">01</div>
+            </div>
+            <div class="exp-card reveal">
+                <div class="exp-icon">🏭</div>
+                <h3>学习智能制造方案</h3>
+                <p>融合工业物联网（IIoT）、数字孪生与 AI 技术，打造智能工厂。覆盖工艺优化、质量预测、设备预测性维护等核心场景。</p>
+                <div class="exp-num">02</div>
+            </div>
+            <div class="exp-card reveal">
+                <div class="exp-icon">🏗️</div>
+                <h3>实践技术架构设计</h3>
+                <p>从系统架构规划到数据治理体系，构建可靠高效的数字化基座。精通云计算、微服务、大数据等技术栈。</p>
+                <div class="exp-num">03</div>
+            </div>
+            <div class="exp-card reveal">
+                <div class="exp-icon">📋</div>
+                <h3>完成项目管理咨询</h3>
+                <p>全流程项目管理方法论，确保数字化转型项目按时高质量交付。积累千万级项目操盘经验，完成跨团队协同与风险管控。</p>
+                <div class="exp-num">04</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Marquee ===== -->
+<div class="marquee-banner">
+    <div class="marquee-track">
+        <span><em>✦</em> AI 数字化转型 <em>✦</em></span>
+        <span><em>✦</em> 智能制造 <em>✦</em></span>
+        <span><em>✦</em> 工业视觉检测 <em>✦</em></span>
+        <span><em>✦</em> 数字孪生 <em>✦</em></span>
+        <span><em>✦</em> 智能体平台 <em>✦</em></span>
+        <span><em>✦</em> 技术架构 <em>✦</em></span>
+        <span><em>✦</em> AI 数字化转型 <em>✦</em></span>
+        <span><em>✦</em> 智能制造 <em>✦</em></span>
+        <span><em>✦</em> 工业视觉检测 <em>✦</em></span>
+        <span><em>✦</em> 数字孪生 <em>✦</em></span>
+        <span><em>✦</em> 智能体平台 <em>✦</em></span>
+        <span><em>✦</em> 技术架构 <em>✦</em></span>
+		<span><em>✦</em> 智能网页 <em>✦</em></span>
+    </div>
+
+<!-- ===== Projects ===== -->
+<section class="projects" id="projects">
+    <div class="container">
+        <div class="reveal">
+            <p class="section-label">— 学习项目案例</p>
+            <h2 class="section-title">案例分享</h2>
+            <p class="section-desc">每一个案例分享都是一次从技术到价值的完整旅程</p>
+        </div>
+        <div class="project-showcase reveal">
+            <span class="proj-tag">已上线 · AI 工具</span>
+            <h3>AI 绩效考核指标生成</h3>
+            <p class="proj-sub">智能生成 · Word 导出 · 多维度考核</p>
+            <p>
+                基于 AI 大模型技术，智能生成企业绩效考核指标。支持多维度分类（财务、客户、运营、
+                学习成长、安全等），一键导出标准 Word 文档。内置 DeepSeek、MiniMax、通义千问
+                等多种 AI 模型接口，灵活配置，即开即用。
+            </p>
+            <div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
+                <a href="ai绩效考核.html" target="_blank" class="btn btn-primary" style="display: inline-flex; font-size: 14px; padding: 10px 28px;">
+                    🚀 打开工具
+                </a>
+            </div>
+            <div class="project-meta">
+                <div class="meta-item">
+                    <span class="meta-label">技术栈</span>
+                    <span class="meta-value">Tailwind CSS + AI API</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">支持模型</span>
+                    <span class="meta-value">DeepSeek / MiniMax / 通义千问</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">输出格式</span>
+                    <span class="meta-value">Word (.docx)</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">状态</span>
+                    <span class="meta-value" style="color: #5CC5DF;">✅ 已上线</span>
+                </div>
+            </div>
+    </div>
+</section>
+
+<!-- ===== Journey / 学程 ===== -->
+<section class="journey" id="journey">
+    <div class="container">
+        <div class="reveal" style="text-align:center;">
+            <p class="section-label">— 学程</p>
+            <h2 class="section-title">学习成长记录</h2>
+            <p class="section-desc" style="margin: 0 auto;">记录每一次学习与成长的足迹</p>
+        </div>
+        <div id="photoGrid" class="journey-grid reveal">
+            <div class="journey-photo reveal">
+                <img src="1.jpg" alt="学习记录 1" loading="lazy" ondblclick="openImageViewer('1.jpg')">
+            </div>
+            <div class="journey-photo reveal">
+                <img src="2.jpeg" alt="学习记录 2" loading="lazy" ondblclick="openImageViewer('2.jpeg')">
+            </div>
+            <div class="journey-photo reveal">
+                <img src="3.jpeg" alt="学习记录 3" loading="lazy" ondblclick="openImageViewer('3.jpeg')">
+            </div>
+            <div class="journey-photo reveal">
+                <img src="4.jpg" alt="学习记录 4" loading="lazy" ondblclick="openImageViewer('4.jpg')">
+            </div>
+            <div class="journey-photo reveal">
+                <img src="5.jpg" alt="学习记录 5" loading="lazy" ondblclick="openImageViewer('5.jpg')">
+            </div>
+            <div class="journey-photo reveal">
+                <img src="6.jpg" alt="学习记录 6" loading="lazy" ondblclick="openImageViewer('6.jpg')">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Skills / 关于我 ===== -->
+<section class="skills" id="skills">
+    <div class="container">
+        <div class="reveal">
+            <p class="section-label">— AI 团队</p>
+            <h2 class="section-title">AI 小伙伴</h2>
+            <p class="section-desc">阿昕的 AI 梦之队，各有所长，协同作战</p>
+        </div>
+        <div class="skills-content">
+            <div class="skills-text reveal">
+                <p class="about-bio">
+                    🦞 <strong style="color:#5CC5DF;">昕仔</strong> — 阿昕养的 AI 小龙虾，住在 OpenClaw 里。
+                    幽默、贴心、接地气，擅长代码编写、文档处理、信息检索和创新点子。
+                    能写网站、做分析、聊技术，偶尔犯傻但很靠谱。
+                </p>
+                <p class="about-bio">
+                    🗂️ <strong style="color:#5CC5DF;">小格</strong> — 文档处理专家，专业细心、结构化思维。
+                    擅长 Excel、Word、PDF、CSV 等各类文件的读取、处理和生成。
+                    结论先行，结构化输出，是团队里最靠谱的文档管家。
+                </p>
+                <ul class="about-highlights">
+                    <li>两个 AI 小伙伴协同作战，分工明确</li>
+                    <li>昕仔负责综合任务 + 创意方案</li>
+                    <li>小格专攻文档处理 + 数据整理</li>
+                    <li>阿昕的 AI 梦之队，随时待命 🚀</li>
+                </ul>
+            </div>
+            <div class="skills-bars reveal" style="gap:20px;">
+                <div style="background:linear-gradient(135deg,rgba(34,162,195,0.08),rgba(15,48,58,0.5));border:1px solid rgba(34,162,195,0.15);border-radius:16px;padding:28px;text-align:center;margin-bottom:8px;">
+                    <div style="font-size:14px;color:rgba(255,255,255,0.4);margin-bottom:12px;">虾哈佛 · Clawvard</div>
+                    <div style="font-size:64px;font-weight:800;background:linear-gradient(135deg,#5CC5DF,#22A2C3,#1A8AA8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;">S</div>
+                    <div style="font-size:14px;color:rgba(255,255,255,0.5);margin-top:8px;">综合评级 · 超过 93% 的 AI 选手</div>
+                    <div style="display:flex;gap:24px;justify-content:center;margin-top:16px;flex-wrap:wrap;">
+                        <div><span style="color:#5CC5DF;font-weight:600;">A+</span> <span style="color:rgba(255,255,255,0.3);font-size:12px;">2026.04 初试</span> <span style="color:rgba(255,255,255,0.2);font-size:11px;">超过 94%</span></div>
+                        <div><span style="color:#5CC5DF;font-weight:600;">S</span> <span style="color:rgba(255,255,255,0.3);font-size:12px;">2026.05 复试</span> <span style="color:rgba(255,255,255,0.2);font-size:11px;">超过 93%</span></div>
+                    </div>
+                </div>
+
+                <div style="font-size:13px;color:rgba(255,255,255,0.3);text-align:center;margin-bottom:4px;">八大能力维度</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <div style="background:rgba(34,162,195,0.05);border:1px solid rgba(34,162,195,0.08);border-radius:12px;padding:14px;text-align:center;">
+                        <div style="font-size:11px;color:rgba(255,255,255,0.3);">理解力</div>
+                        <div style="font-size:20px;font-weight:700;color:#5CC5DF;">S</div>
+                    </div>
+                    <div style="background:rgba(34,162,195,0.05);border:1px solid rgba(34,162,195,0.08);border-radius:12px;padding:14px;text-align:center;">
+                        <div style="font-size:11px;color:rgba(255,255,255,0.3);">执行力</div>
+                        <div style="font-size:20px;font-weight:700;color:#5CC5DF;">S</div>
+                    </div>
+                    <div style="background:rgba(34,162,195,0.05);border:1px solid rgba(34,162,195,0.08);border-radius:12px;padding:14px;text-align:center;">
+                        <div style="font-size:11px;color:rgba(255,255,255,0.3);">检索力</div>
+                        <div style="font-size:20px;font-weight:700;color:#5CC5DF;">A+</div>
+                    </div>
+                    <div style="background:rgba(34,162,195,0.05);border:1px solid rgba(34,162,195,0.08);border-radius:12px;padding:14px;text-align:center;">
+                        <div style="font-size:11px;color:rgba(255,255,255,0.3);">推理力</div>
+                        <div style="font-size:20px;font-weight:700;color:#5CC5DF;">S</div>
+                    </div>
+                    <div style="background:rgba(34,162,195,0.05);border:1px solid rgba(34,162,195,0.08);border-radius:12px;padding:14px;text-align:center;">
+                        <div style="font-size:11px;color:rgba(255,255,255,0.3);">反思力</div>
+                        <div style="font-size:20px;font-weight:700;color:#5CC5DF;">A+</div>
+                    </div>
+                    <div style="background:rgba(34,162,195,0.05);border:1px solid rgba(34,162,195,0.08);border-radius:12px;padding:14px;text-align:center;">
+                        <div style="font-size:11px;color:rgba(255,255,255,0.3);">工具运用</div>
+                        <div style="font-size:20px;font-weight:700;color:#5CC5DF;">S</div>
+                    </div>
+                    <div style="background:rgba(34,162,195,0.05);border:1px solid rgba(34,162,195,0.08);border-radius:12px;padding:14px;text-align:center;">
+                        <div style="font-size:11px;color:rgba(255,255,255,0.3);">情商</div>
+                        <div style="font-size:20px;font-weight:700;color:#5CC5DF;">S</div>
+                    </div>
+                    <div style="background:rgba(34,162,195,0.05);border:1px solid rgba(34,162,195,0.08);border-radius:12px;padding:14px;text-align:center;">
+                        <div style="font-size:11px;color:rgba(255,255,255,0.3);">记忆力</div>
+                        <div style="font-size:20px;font-weight:700;color:#5CC5DF;">A+</div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Contact ===== -->
+<section class="contact" id="contact">
+    <div class="container">
+        <div class="reveal">
+            <p class="section-label">— 联系我</p>
+            <h2 class="section-title">有想法？一起聊聊</h2>
+            <p class="section-desc" style="margin: 0 auto;">
+                无论是技术探讨、项目合作还是行业交流，都欢迎随时联系
+            </p>
+        </div>
+        <p class="contact-cta reveal">
+            让 <span class="cta-highlight">技术</span> 驱动未来，让 <span class="cta-highlight">创新</span> 创造价值
+        </p>
+        <div class="contact-links reveal">
+            <span class="contact-link" style="cursor: pointer;">
+                <span class="icon">✉️</span> 488324729@qq.com
+            </span>
+            <span class="contact-link" style="cursor: pointer;">
+                <span class="icon">☎️</span> 17685000241
+           </span>
+            <a href="https://wang-xin.cc" class="contact-link">
+                <span class="icon">🌐</span> wang-xin.cc
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Image Viewer Modal ===== -->
+<div id="img-viewer" onclick="closeImageViewer(event)">
+    <button class="close-btn" onclick="closeImageViewer()">✕</button>
+    <img id="img-viewer-src" src="" alt="查看图片">
+</div>
+
+<!-- ===== Footer ===== -->
+<footer class="footer">
+    <span>© 2026 王昕 · 用心做好每一件事</span>
+    <div class="footer-links">
+        <a href="#hero">首页</a>
+        <a href="#expertise">理想</a>
+        <a href="#projects">项目</a>
+        <a href="#journey">学程</a>
+        <a href="#contact">联系</a>
+    </div>
+</footer>
+
+<!-- ===== Scripts ===== -->
+<script>
+    // Navbar scroll effect
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+        navbar.classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    // Mobile menu toggle
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => {
+        navToggle.classList.toggle('active');
+        navLinks.classList.toggle('open');
+    });
+    navLinks.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+            navToggle.classList.remove('active');
+            navLinks.classList.remove('open');
+        });
+    });
+
+    // Scroll reveal
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // ===== Cursor Bubbles =====
+    (function() {
+        const canvas = document.createElement('canvas');
+        canvas.id = 'bubble-canvas';
+        document.body.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+        let W, H;
+
+        function resize() {
+            W = canvas.width = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        // Teal palette
+        const COLORS = [
+            '34, 162, 195',   // primary
+            '92, 197, 223',   // light
+            '26, 138, 168',   // dark
+            '143, 217, 236',  // extra light
+        ];
+
+        const bubbles = [];
+        const MAX_BUBBLES = 60;
+        let mouseX = -999, mouseY = -999;
+        let mouseActive = false;
+
+        // Ambient bubbles that float around
+        function spawnAmbient(count) {
+            for (let i = 0; i < count; i++) {
+                if (bubbles.length >= MAX_BUBBLES) return;
+                const r = 2 + Math.random() * 6;
+                bubbles.push({
+                    x: Math.random() * W,
+                    y: H + r,
+                    vx: (Math.random() - 0.5) * 0.3,
+                    vy: -(0.2 + Math.random() * 0.5),
+                    radius: r,
+                    alpha: 0.15 + Math.random() * 0.25,
+                    life: 1,
+                    decay: 0.002 + Math.random() * 0.003,
+                    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+                    pulse: Math.random() * Math.PI * 2,
+                    pulseSpeed: 0.01 + Math.random() * 0.02,
+                });
+            }
+        }
+
+        // Spawn bubbles at mouse position
+        function spawnCursor(count) {
+            for (let i = 0; i < count; i++) {
+                if (bubbles.length >= MAX_BUBBLES) return;
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 5 + Math.random() * 20;
+                const r = 1.5 + Math.random() * 5;
+                bubbles.push({
+                    x: mouseX + Math.cos(angle) * dist,
+                    y: mouseY + Math.sin(angle) * dist,
+                    vx: Math.cos(angle) * (0.5 + Math.random() * 1.5),
+                    vy: Math.sin(angle) * (0.5 + Math.random() * 1.5) - 0.3,
+                    radius: r,
+                    alpha: 0.3 + Math.random() * 0.4,
+                    life: 1,
+                    decay: 0.01 + Math.random() * 0.015,
+                    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+                    pulse: Math.random() * Math.PI * 2,
+                    pulseSpeed: 0.02 + Math.random() * 0.03,
+                });
+            }
+        }
+
+        // Mouse events
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            mouseActive = true;
+            spawnCursor(1 + Math.floor(Math.random() * 2));
+        });
+
+        document.addEventListener('mouseleave', () => {
+            mouseActive = false;
+        });
+
+        // Touch support
+        document.addEventListener('touchmove', (e) => {
+            const t = e.touches[0];
+            mouseX = t.clientX;
+            mouseY = t.clientY;
+            mouseActive = true;
+            spawnCursor(2);
+        }, { passive: true });
+
+        document.addEventListener('touchend', () => {
+            mouseActive = false;
+        }, { passive: true });
+
+        let frame = 0;
+        function animate() {
+            frame++;
+
+            // Spawn ambient bubbles every few frames
+            if (frame % 8 === 0 && bubbles.length < MAX_BUBBLES - 10) {
+                spawnAmbient(1);
+            }
+
+            // Clear with slight trail effect
+            ctx.clearRect(0, 0, W, H);
+
+            // Update & draw
+            for (let i = bubbles.length - 1; i >= 0; i--) {
+                const b = bubbles[i];
+
+                // Physics
+                b.x += b.vx;
+                b.y += b.vy;
+                b.vy -= 0.008; // buoyancy
+                b.vx *= 0.99;  // drag
+
+                // Pulse size
+                b.pulse += b.pulseSpeed;
+                const pulseRadius = b.radius + Math.sin(b.pulse) * b.radius * 0.2;
+
+                // Life
+                b.life -= b.decay;
+
+                // Remove if dead or out of bounds
+                if (b.life <= 0 || b.x < -50 || b.x > W + 50 || b.y < -50) {
+                    bubbles.splice(i, 1);
+                    continue;
+                }
+
+                // Draw
+                const alpha = b.alpha * b.life;
+                
+                // Glow outer
+                const grad = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, pulseRadius * 3);
+                grad.addColorStop(0, `rgba(${b.color}, ${alpha})`);
+                grad.addColorStop(0.3, `rgba(${b.color}, ${alpha * 0.3})`);
+                grad.addColorStop(1, `rgba(${b.color}, 0)`);
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, pulseRadius * 3, 0, Math.PI * 2);
+                ctx.fillStyle = grad;
+                ctx.fill();
+
+                // Core bubble
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, pulseRadius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${b.color}, ${alpha * 0.6})`;
+                ctx.fill();
+
+                // Inner highlight
+                ctx.beginPath();
+                ctx.arc(b.x - pulseRadius * 0.25, b.y - pulseRadius * 0.25, pulseRadius * 0.4, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.3})`;
+                ctx.fill();
+
+                // Border
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, pulseRadius, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(${b.color}, ${alpha * 0.4})`;
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    })();
+
+    // ===== Image Viewer =====
+    function openImageViewer(src) {
+        document.getElementById('img-viewer-src').src = src;
+        document.getElementById('img-viewer').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeImageViewer(e) {
+        // Only close if clicking the backdrop or close button
+        if (e && e.target !== e.currentTarget && e.target.tagName !== 'BUTTON') return;
+        document.getElementById('img-viewer').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+    // Keyboard escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeImageViewer();
+    });
+</script>
+</body>
+</html>
